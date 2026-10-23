@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <UseWindowsForms>false</UseWindowsForms><UseAppHost>false</UseAppHost>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/ViavwTool/ToolService.cs" Link="ProductionToolService.cs" />
+    <Compile Include="../../src/ViavwTool/Transport.cs" Link="ProductionTransport.cs" />
+    <Compile Include="../../src/ViavwTool/DetachedProcess.cs" Link="ProductionDetachedProcess.cs" />
+  </ItemGroup>
+</Project>

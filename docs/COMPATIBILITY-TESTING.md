@@ -24,3 +24,5 @@ Report results by workflow and configuration:
 Small purpose-built applications remain useful for isolating a failure, measuring one mechanism and regression testing. They supplement real application workflows. Their successful behavior does not establish compatibility for an unrelated application or an entire framework.
 
 Preserve failures, avoid replaying input merely to obtain a successful screenshot, and clean up owned processes. A read-only observation may wait for a bounded condition without issuing the input again. Record any deliberate repeated action, such as two undo operations. Automated Human-sender tests do not establish physical-human acceptance.
+
+The [Excel modal reconciliation follow-up](validation/2026-10-23-excel-reconciliation.md) separates historical Office GUI results from new production-linked fake-peer recovery tests. Intended XLSX Save As after an unknown F12 transition and physical-human noninterference remain pending; passed fence/reconnect tests do not upgrade those application operations to verified.

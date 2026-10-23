@@ -157,3 +157,14 @@ dotnet .\tests\ViavwTool.TransportTests\bin\Release\net10.0\ViavwTool.TransportT
 See the [fail-closed transport evidence](validation/2026-10-23-owner-transport.md).
 These tests validate transport failure semantics, not GUI/application compatibility
 or physical Human acceptance.
+
+## Modal-input reconciliation regression without GUI
+
+This dependency-free test links production tool/transport code, uses synthetic private records and an in-process fake owner, and launches no applications or live services.
+
+```powershell
+dotnet build .\tests\ViavwTool.ReconciliationTests\ViavwTool.ReconciliationTests.csproj -c Release -p:RestoreConfigFile="$PWD/scripts/NuGet.offline.config" -p:NuGetAudit=false
+dotnet .\tests\ViavwTool.ReconciliationTests\bin\Release\net10.0\ViavwTool.ReconciliationTests.dll
+```
+
+See the [Excel reconciliation evidence and operation matrix](validation/2026-10-23-excel-reconciliation.md). Fake-peer recovery coverage does not qualify a real Excel Save As or physical-human workflow.
