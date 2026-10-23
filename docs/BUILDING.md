@@ -142,3 +142,18 @@ Read the [sanitized validation summary](validation/2026-10-23-source-build.md).
 Generated raw logs, captures, runtime state and local package selections remain
 ignored. Their historical paths are evidence references for the original local
 run, not downloadable files supplied by this repository.
+
+## Owner-transport regression without GUI
+
+This dependency-free console test links production Transport.cs and runs only
+in-process fake named pipes. It does not start the installed tool, LayerHost,
+applications or private desktops, and does not send physical input.
+
+```powershell
+dotnet build .\tests\ViavwTool.TransportTests\ViavwTool.TransportTests.csproj -c Release -p:RestoreConfigFile="$PWD/scripts/NuGet.offline.config" -p:NuGetAudit=false
+dotnet .\tests\ViavwTool.TransportTests\bin\Release\net10.0\ViavwTool.TransportTests.dll
+```
+
+See the [fail-closed transport evidence](validation/2026-10-23-owner-transport.md).
+These tests validate transport failure semantics, not GUI/application compatibility
+or physical Human acceptance.
