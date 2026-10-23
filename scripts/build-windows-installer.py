@@ -1,48 +1,82 @@
-"""Build a standard per-user Windows MSI around the verified portable tool."""
+"""Generate a per-user MSI from explicit pinned inputs, or legacy local selection.
+Generation never installs, selects, signs or qualifies the result.
+"""
+import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
-import sys
 import uuid
 import xml.etree.ElementTree as ET
-import zipfile
 from build_tool_launcher import build as build_launcher
+from installer_inputs import validate_archive, validate_package, existing_tool
 
 ROOT=Path(__file__).resolve().parents[1]
-name=sys.argv[1] if len(sys.argv)>1 else 'installer-20261023a'
-testing='--test' in sys.argv[2:]
-version='0.1.2'
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('name',nargs='?',default='installer-20261023a')
+inputs=parser.add_mutually_exclusive_group()
+inputs.add_argument('--archive',type=Path)
+inputs.add_argument('--package',type=Path)
+parser.add_argument('--archive-sha256')
+parser.add_argument('--package-manifest-sha256')
+parser.add_argument('--version',help='Expected product version; must match the package manifest.')
+parser.add_argument('--output-root',type=Path)
+parser.add_argument('--wix',type=Path)
+parser.add_argument('--wix-extension',type=Path)
+parser.add_argument('--vswhere',type=Path)
+parser.add_argument('--msvc-root',type=Path)
+parser.add_argument('--windows-sdk-root',type=Path)
+parser.add_argument('--windows-sdk-version')
+parser.add_argument('--desktop-from',type=Path,help='Legacy selection mode only.')
+parser.add_argument('--test',action='store_true',help='Use separate test product/registry/menu identity; does not install.')
+args=parser.parse_args()
+name=args.name
+if not name.replace('-','').isalnum() or len(name)>80:raise ValueError('Use a simple new build name')
+explicit=args.archive is not None or args.package is not None
+if explicit and args.desktop_from:raise ValueError('Explicit inputs must contain their manifest-verified manager; desktop overlay is not allowed.')
+if args.archive:
+    if args.package_manifest_sha256:raise ValueError('Package manifest hash is only for --package')
+    validated=validate_archive(args.archive,args.archive_sha256,args.version)
+elif args.package:
+    if args.archive_sha256:raise ValueError('Archive hash is only for --archive')
+    validated=validate_package(args.package,args.package_manifest_sha256,args.version)
+else:
+    if args.archive_sha256 or args.package_manifest_sha256:raise ValueError('Explicit hashes require an explicit input path')
+    selection=json.loads((ROOT/'artifacts/standalone-tool-current.json').read_text())
+    validated=validate_archive(selection['archive'],selection['archiveSha256'],args.version,require_manager=False)
+archive=validated.path if validated.archive else None
+version=validated.manifest['version'];release=validated.manifest['release']
+wix_exe=existing_tool(args.wix or ROOT/'artifacts/installer-tools/wix.exe','WiX executable')
+if explicit and not args.wix_extension:raise ValueError('Explicit mode requires --wix-extension pointing to an existing WixToolset.UI.wixext DLL; no extension is downloaded.')
+wix_extension=str(existing_tool(args.wix_extension,'WiX UI extension')) if args.wix_extension else 'WixToolset.UI.wixext'
+output_root=(args.output_root or ROOT/'artifacts').resolve()
+installed=Path(os.environ.get('LOCALAPPDATA',str(Path.home()/'AppData/Local')))/'Programs/VIAVW'
+if output_root.is_relative_to(installed.resolve()) or output_root.is_relative_to((ROOT/'src').resolve()):raise ValueError('Installer output must not be inside the installation or source directories')
+build=output_root/name
+if build.exists():raise ValueError('Installer build directory already exists; use a fresh name')
+build.mkdir(parents=True)
+payload=build/'payload';validated.materialize(payload)
+launcher=build_launcher(build/'launcher',vswhere=args.vswhere,msvc_root=args.msvc_root,sdk_root=args.windows_sdk_root,sdk_version=args.windows_sdk_version)
+(build/'viavw-current.txt').write_text('releases\\'+release+'\\viavw.exe\n',encoding='ascii')
+host=payload/'src/LayerHost/bin/Runtime/net10.0-windows'
+if not explicit:
+    desktop=build/'desktop'
+    if args.desktop_from:
+        source_desktop=args.desktop_from.resolve()
+        if not source_desktop.is_relative_to(ROOT/'artifacts'):raise ValueError('Reuse only an owned preserved manager build')
+        shutil.copytree(source_desktop,desktop)
+    else:
+        subprocess.run(['dotnet','publish',str(ROOT/'src/ViavwDesktop/ViavwDesktop.csproj'),'-c',name,'-r','win-x64','--self-contained','true','-o',str(desktop),'--nologo','-v','minimal'],check=True)
+    for source in desktop.rglob('*'):
+        if not source.is_file():continue
+        relative=source.relative_to(desktop);existing=host/relative
+        if source.name.startswith('VIAVW.Manager'):shutil.copy2(source,existing)
+        elif not existing.exists() or hashlib.sha256(source.read_bytes()).digest()!=hashlib.sha256(existing.read_bytes()).digest():raise ValueError('Manager requires a different runtime: '+str(relative))
+testing=args.test
 registry_key=r'Software\VIAVW'+('-InstallerTest' if testing else '')
 product_name='VIAVW'+(' Installer Test' if testing else '')
-if not name.replace('-','').isalnum():raise ValueError('Use a simple new build name')
-build=ROOT/'artifacts'/name
-build.mkdir()
-selection=json.loads((ROOT/'artifacts/standalone-tool-current.json').read_text())
-archive=Path(selection['archive'])
-if hashlib.sha256(archive.read_bytes()).hexdigest().upper()!=selection['archiveSha256']:raise ValueError('Selected archive integrity failed')
-release=json.loads(Path(selection['manifest']).read_text(encoding='utf-8-sig'))['release']
-payload=build/'payload';payload.mkdir()
-with zipfile.ZipFile(archive) as package:package.extractall(payload)
-launcher=build_launcher(build/'launcher')
-(build/'viavw-current.txt').write_text('releases\\'+release+'\\viavw.exe\n',encoding='ascii')
-desktop=build/'desktop'
-if '--desktop-from' in sys.argv:
-    source_desktop=Path(sys.argv[sys.argv.index('--desktop-from')+1]).resolve()
-    if not source_desktop.is_relative_to(ROOT/'artifacts'):raise ValueError('Reuse only an owned preserved manager build')
-    shutil.copytree(source_desktop,desktop)
-else:
-    subprocess.run(['dotnet','publish',str(ROOT/'src/ViavwDesktop/ViavwDesktop.csproj'),'-c',name,'-r','win-x64','--self-contained','true','-o',str(desktop),'--nologo','-v','minimal'],check=True)
-host=payload/'src/LayerHost/bin/Runtime/net10.0-windows'
-for source in desktop.rglob('*'):
-    if not source.is_file():continue
-    relative=source.relative_to(desktop);existing=host/relative
-    if source.name.startswith('VIAVW.Manager'):
-        shutil.copy2(source,existing)
-    elif not existing.exists() or hashlib.sha256(source.read_bytes()).digest()!=hashlib.sha256(existing.read_bytes()).digest():
-        raise ValueError('Manager requires a different runtime: '+str(relative))
-# Bundled runtime files are reused unchanged. The accepted tool manifest stays intact.
 (build/'notice.rtf').write_text(r'{\rtf1\ansi\deff0 {\fonttbl {\f0 Segoe UI;}}\f0\fs22 VIAVW application layers\par\par This research application is installed for your Windows account. Application compatibility varies.\par\par Close VIAVW layers before uninstalling. User-created documents and layer state are retained. No driver or Windows service is installed.\par\par Bundled Microsoft runtime licenses and notices are included in the installation.}',encoding='ascii')
 NS='http://wixtoolset.org/schemas/v4/wxs';UI=NS+'/ui'
 ET.register_namespace('',NS);ET.register_namespace('ui',UI)
@@ -106,11 +140,11 @@ ET.SubElement(package,'{'+UI+'}WixUI',{'Id':'WixUI_InstallDir','InstallDirectory
 add(package,'WixVariable',Id='WixUILicenseRtf',Value=str(build/'notice.rtf'))
 wxs=build/'VIAVW.wxs';ET.ElementTree(wix).write(wxs,encoding='utf-8',xml_declaration=True)
 installer=build/('VIAVW-Setup-'+version+('-test' if testing else '')+'-x64.msi')
-result=subprocess.run([str(ROOT/'artifacts/installer-tools/wix.exe'),'build',str(wxs),'-arch','x64','-ext','WixToolset.UI.wixext','-intermediatefolder',str(build/'wix-temp'),'-out',str(installer)],capture_output=True,text=True,cwd=ROOT)
+result=subprocess.run([str(wix_exe),'build',str(wxs),'-arch','x64','-ext',wix_extension,'-intermediatefolder',str(build/'wix-temp'),'-out',str(installer)],capture_output=True,text=True,cwd=ROOT)
 (build/'wix-build.log').write_text(result.stdout+result.stderr,encoding='utf-8')
 if result.returncode:
     print('\n'.join(dict.fromkeys((result.stdout+result.stderr).splitlines()))[-8000:])
     raise RuntimeError('MSI build failed; see '+str(build/'wix-build.log'))
-report=dict(installer=str(installer),sha256=hashlib.sha256(installer.read_bytes()).hexdigest().upper(),bytes=installer.stat().st_size,productCode=product,version=version,release=release,sourceArchive=str(archive),sourceArchiveSha256=selection['archiveSha256'],files=owned,rootFiles=root_files,testing=testing,menuName=product_name)
+report=dict(installer=str(installer),sha256=hashlib.sha256(installer.read_bytes()).hexdigest().upper(),bytes=installer.stat().st_size,productCode=product,version=version,release=release,sourceArchive=str(archive) if archive else None,sourceArchiveSha256=validated.source_sha256 if validated.archive else None,inputKind='archive' if validated.archive else 'package',inputSha256=validated.source_sha256,generationOnly=True,installedQualification='not run',wixTool=str(wix_exe),wixExtension=wix_extension,files=owned,rootFiles=root_files,testing=testing,menuName=product_name)
 (build/'installer.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
 print('VIAVW_INSTALLER='+str(installer),flush=True)

@@ -53,13 +53,56 @@ It intentionally requires the locally preserved durable selection/snapshot.
 Those ignored inputs are not part of a clean checkout; use Tracked for a new
 source build. Neither build mode is the separate release-selection command.
 
-The historical MSI builder remains a separate stage: it requires a verified
-portable selection/archive, MSVC x64 tools discoverable through `vswhere`, Windows
-SDK headers/libraries, WiX plus `WixToolset.UI.wixext` at its documented local
-tool location (`artifacts/installer-tools/wix.exe`), and the same runtime packs.
-This clean-package validation does not build, sign, install or test an MSI and
-does not fabricate those prerequisites or alter a production selection to test
-them. A selection-independent MSI entry point remains follow-up work.
+## MSI generation from explicit inputs
+
+Python 3, an existing WiX executable and matching WiX UI extension DLL, MSVC x64
+tools, and Windows SDK headers/libraries are required. Generation was verified
+with MSVC 14.51.36231, Windows SDK 10.0.26100.0 and UI extension 5.0.2. Nothing is
+installed or downloaded by this explicit-input route. The native stable launcher
+is built from tracked C++ source; the manifest-verified manager is reused from
+the portable package, without a .NET republish or private selection file.
+
+Use your actual existing tool paths and the expected SHA-256 from your trusted
+portable build receipt. Example paths below are placeholders:
+
+```powershell
+python .\scripts\build-windows-installer.py installer-local `
+  --archive 'D:\Build\VIAVW-Tool-0.1.2-tool-local-0-1-2-win-x64.zip' `
+  --archive-sha256 '<expected archive SHA-256>' --version 0.1.2 `
+  --output-root 'D:\Build\MSI' --wix 'D:\Tools\WiX\wix.exe' `
+  --wix-extension 'D:\Tools\WiX\WixToolset.UI.wixext.dll' `
+  --msvc-root 'D:\Tools\MSVC\14.51.36231' `
+  --windows-sdk-root 'D:\WindowsKits\10' --windows-sdk-version 10.0.26100.0 --test
+```
+
+Alternatively, use `--package <untouched directory>` and
+`--package-manifest-sha256 <expected package.json SHA-256>` instead of the archive
+arguments. A directory must contain exactly its manifest files and package.json;
+live state or extra files are rejected. Use the ZIP or a fresh extraction if
+diagnostics already created runtime state in a package directory.
+
+Input validation checks complete file hashes, safe unique Windows paths, required
+host/tool/manager/runtime/notice files, Windows x64 format and MSI numeric-version
+limits. `--version` asserts agreement with the package; it never relabels a
+different product version. Input hashes prove consistency with the provided pin,
+not author authenticity or application qualification. Outputs must use a new
+build directory; installation/source directories are rejected as output roots.
+
+`--msvc-root` names an existing MSVC version directory. Without it, the existing
+standard Visual Studio locator is used; override with `--vswhere`. WiX/extension
+paths must exist in explicit mode. Missing prerequisites fail; no extension/tool
+installation is attempted. Full commands and local hashes are recorded in the
+generated `installer.json`, alongside `generationOnly: true`.
+
+With no explicit archive/package, the legacy local-selection mode and
+`--desktop-from` option remain available. They are not needed for this clean
+source-to-ZIP-to-MSI route. No builder changes release selection or installs MSI.
+The `--test` switch separates product/registry/menu identity; it does not itself
+provide an isolated install location. Installation, repair and removal
+qualification require a separately authorized disposable environment. This slice
+generated an MSI only and did not sign, install or qualify it.
+
+See the [generation-only validation summary](validation/2026-10-23-msi-generation.md).
 
 ## Installed-application test prerequisites and overrides
 

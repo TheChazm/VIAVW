@@ -67,5 +67,6 @@ Human acceptance on the tested machine remains pending. This earlier runtime
 evidence does not automatically validate a newly compiled package.
 
 CharlieAI, installed VIAVW and release-selection files are unchanged by this
-slice. No source license, remote, tag, publication or push was added. MSI and
-cross-platform runtime validation remain unperformed.
+slice. No source license, remote, tag, publication or push was added. MSI installation and cross-platform runtime validation remain unperformed.
+A later [generation-only MSI follow-up](2026-10-23-msi-generation.md) validates
+explicit inputs and build output without claiming installed qualification.
