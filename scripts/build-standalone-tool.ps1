@@ -1,4 +1,14 @@
-param([string]$Release = 'tool-20261023a',[string]$Version = '0.1.2')
+param(
+    [string]$Release = 'tool-20261023a', [string]$Version = '0.1.2',
+    [ValidateSet('Pinned','Tracked')][string]$SourceMode = 'Pinned',
+    [string]$OutputRoot, [switch]$Offline, [string]$PackageCache
+)
+$ErrorActionPreference = 'Stop'
+if ($SourceMode -eq 'Tracked') {
+    & (Join-Path $PSScriptRoot 'build-tracked-package.ps1') -Release $Release -Version $Version -OutputRoot $OutputRoot -Offline:$Offline -PackageCache $PackageCache
+    return
+}
+if ($OutputRoot -or $Offline -or $PackageCache) { throw 'OutputRoot, Offline and PackageCache apply only to SourceMode Tracked. Pinned mode remains unchanged.' }
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 if ($Release -notmatch '^tool-[a-z0-9-]+$') { throw 'Use a simple preserved tool release name.' }

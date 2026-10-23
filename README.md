@@ -1,5 +1,7 @@
 # VIAVW — Virtual Application Layers for Windows
 
+[Clean-checkout build and packaging](docs/BUILDING.md) describes the tracked-source mode and prerequisites. [Public validation summary](docs/validation/2026-10-23-source-build.md) separates reproducible build evidence from application/Human acceptance. Historical `artifacts/` paths throughout these reports are local generated evidence, excluded from Git; they are not supplied by a clean checkout.
+
 [Windows installation and live Codex connection](docs/WINDOWS-INSTALLATION-20261023.md): VIAVW is installed at `%LOCALAPPDATA%\Programs\VIAVW`, with a Start menu manager and a standard Windows MSI in `dist`. Install, repair, removal, live-layer protection and document retention passed automated tests. Codex's registered VIAVW tools were used directly in this conversation to edit and save an installed Notepad++ document. CharlieAI remains unchanged.
 
 [Standalone tool package](docs/STANDALONE-TOOL.md) supplies a self-contained Windows executable, 13 discoverable MCP tools, a JSON command interface and an optional Human viewer. AI clients connect externally; CharlieAI remains unchanged. The packaged release passed direct installed Notepad++/7-Zip workflows and official MCP SDK tests, including controller-crash recovery and two independent applications. See [package verification](docs/STANDALONE-TOOL-20261023.md) and `artifacts/standalone-tool-current.json` for the tested ZIP/executable.

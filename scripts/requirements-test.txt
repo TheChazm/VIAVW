@@ -1,0 +1,3 @@
+# Tested top-level dependencies; transitive dependency locking is not claimed.
+mcp==1.30.0
+jsonschema==4.26.0

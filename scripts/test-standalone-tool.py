@@ -16,6 +16,7 @@ import traceback
 import uuid
 import zipfile
 
+from app_test_paths import application
 ROOT=Path(__file__).resolve().parents[1]
 source=Path(sys.argv[1]).resolve()
 out=ROOT/'artifacts'/('standalone-verification-'+uuid.uuid4().hex);out.mkdir()
@@ -152,7 +153,7 @@ try:
     # Independent archive GUI exercises a second installed application.
     archive=package/'artifacts'/'disposable.zip'
     with zipfile.ZipFile(archive,'x') as z:z.writestr('hello.txt','Extracted through standalone VIAVW tool.\n')
-    zl=c.call('viavw_create',executable=r'C:\Program Files\7-Zip\7zFM.exe',arguments=[str(archive)])['layer'];layers.append(zl);state(c,zl)
+    zl=c.call('viavw_create',executable=application('VIAVW_7ZIP_EXE','7-Zip/7zFM.exe'),arguments=[str(archive)])['layer'];layers.append(zl);state(c,zl)
     zo=observe(c,zl,True)['structuredContent']['data'];images.append(zo['result']['image']['path']);view=next(w['Handle'] for w in zo['result']['windows'] if w['ClassName']=='SysListView32')
     action(c,zl,'click',window=view,x=70,y=54,deliveryMode='posted');action(c,zl,'chord',keys=[17,65]);action(c,zl,'key',key=116)
     deadline=time.monotonic()+5

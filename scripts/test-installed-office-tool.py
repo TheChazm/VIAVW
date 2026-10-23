@@ -3,7 +3,8 @@ import asyncio, base64, ctypes, json, site, sys, time, traceback, uuid, zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
-site.addsitedir(str(ROOT/'artifacts/tool-mcp-sdk-20261023'))
+from app_test_paths import application, add_sdk_path
+add_sdk_path(ROOT)
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 package=Path(sys.argv[1]).resolve()
@@ -48,7 +49,7 @@ async def main():
                 start=time.perf_counter();r=await call('viavw_input',**a);timings.append((time.perf_counter()-start)*1000);return r
             try:
                 path=out/'letter.docx';docx(path)
-                r=await call('viavw_create',executable=r'C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE',arguments=['/a','/n',str(path)])
+                r=await call('viavw_create',executable=application('VIAVW_WORD_EXE','Microsoft Office/root/Office16/WINWORD.EXE'),arguments=['/a','/n',str(path)])
                 layer=r['layer'];layers.append(layer)
                 check('Word auto selects print-window',r['captureMode']=='print-window')
                 for _ in range(100):
@@ -91,7 +92,7 @@ async def main():
                 check('saved Word closes gracefully',result['data']['result']['closed'])
                 closed.add(layer)
                 csv=out/'inventory.csv';csv.write_text('Item,Qty,Price,Total\nPencil,3,2,\nPaper,5,1,\n',encoding='utf-8')
-                r=await call('viavw_create',executable=r'C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE',arguments=['/x','/s',str(csv)])
+                r=await call('viavw_create',executable=application('VIAVW_EXCEL_EXE','Microsoft Office/root/Office16/EXCEL.EXE'),arguments=['/x','/s',str(csv)])
                 layer=r['layer'];layers.append(layer)
                 check('Excel auto selects print-window',r['captureMode']=='print-window')
                 o=await obs(layer,True,True)

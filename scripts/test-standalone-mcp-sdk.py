@@ -17,7 +17,8 @@ import uuid
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
-site.addsitedir(str(ROOT/'artifacts/tool-mcp-sdk-20261023'))
+from app_test_paths import application, add_sdk_path
+add_sdk_path(ROOT)
 from mcp import ClientSession,StdioServerParameters
 from mcp.client.stdio import stdio_client
 from jsonschema import Draft202012Validator
@@ -82,7 +83,7 @@ async def main():
             check('official SDK parses actual application PNG and structured results',hashlib.sha256(png).hexdigest().upper()==data['result']['image']['sha256'])
             archive=package/'artifacts'/('sdk-'+uuid.uuid4().hex+'.zip')
             with zipfile.ZipFile(archive,'x') as z:z.writestr('test.txt','Independent layer SDK test.\n')
-            zl=(await call('viavw_create',executable=r'C:\Program Files\7-Zip\7zFM.exe',arguments=[str(archive)]))['layer'];layers.append(zl)
+            zl=(await call('viavw_create',executable=application('VIAVW_7ZIP_EXE','7-Zip/7zFM.exe'),arguments=[str(archive)]))['layer'];layers.append(zl)
             zs=await status(zl)
             check('two ordinary installed apps run in independent layers',zs['applicationPid']!=pid and zs['layerId']!=first['layerId'])
             async with stdio_client(parameters) as (peer_read,peer_write):

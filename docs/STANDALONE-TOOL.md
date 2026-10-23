@@ -1,5 +1,7 @@
 # VIAVW standalone application tool
 
+To build a new local package from tracked source without preserved artifacts, use [clean-checkout packaging](BUILDING.md). A source-built package is not automatically the accepted installed release.
+
 For the tested Windows MSI installer, installed manager and live Codex registration, see [Windows installation](WINDOWS-INSTALLATION-20261023.md). The portable-package instructions below remain available for other distributions.
 
 The installed 0.1.2 update uses the stable command `%LOCALAPPDATA%\Programs\VIAVW\viavw.exe` with argument `mcp`. See [installed application follow-up](INSTALLED-APPLICATION-FOLLOWUP-20261023.md) for actual Word/Excel workflows, fixes, measurements and remaining limitations.

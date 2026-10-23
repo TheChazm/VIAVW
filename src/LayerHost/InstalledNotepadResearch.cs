@@ -9,7 +9,17 @@ namespace LayerHost;
 // No injected code, Scintilla messages, plugin, clipboard writes or document model API.
 internal static class InstalledNotepadResearch
 {
-    internal const string Executable = @"C:\Program Files\Notepad++\notepad++.exe";
+    internal static string Executable
+    {
+        get
+        {
+            string path = Environment.GetEnvironmentVariable("VIAVW_NOTEPAD_EXE") ??
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Notepad++", "notepad++.exe");
+            if (!Path.IsPathFullyQualified(path) || !string.Equals(Path.GetFileName(path), "notepad++.exe", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("VIAVW_NOTEPAD_EXE must name an absolute installed notepad++.exe path; no fallback is attempted.");
+            return path;
+        }
+    }
     internal record Setup(string Executable, string[] Arguments, string Document, string Settings);
     static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
