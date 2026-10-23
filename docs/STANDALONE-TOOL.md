@@ -1,5 +1,7 @@
 # VIAVW standalone application tool
 
+VIAVW source is MIT licensed with credit to The Coded Craftsman, LLC. Future generated packages include the project `LICENSE`; bundled dependencies retain their separate notices under `licenses/`. Historical installed packages are not rewritten.
+
 To build a new local package from tracked source without preserved artifacts, use [clean-checkout packaging](BUILDING.md). A source-built package is not automatically the accepted installed release.
 
 For the tested Windows MSI installer, installed manager and live Codex registration, see [Windows installation](WINDOWS-INSTALLATION-20261023.md). The portable-package instructions below remain available for other distributions.

@@ -158,3 +158,15 @@ def existing_tool(path, description):
     if not path.is_file():
         raise FileNotFoundError(description+' is missing; supply an existing tool path. No installation/download is attempted: '+str(path))
     return path
+
+
+def include_project_license(project, payload):
+    """Add the approved project notice; never overwrite a different notice."""
+    source=Path(project)/'LICENSE';target=Path(payload)/'LICENSE'
+    if not source.is_file():raise FileNotFoundError('Project LICENSE is missing; no notice is invented.')
+    notice=source.read_bytes()
+    if target.is_symlink():raise ValueError('Project LICENSE target must be a regular file')
+    if target.exists() and target.read_bytes()!=notice:
+        raise ValueError('Package LICENSE differs from project LICENSE; preserve it and review inputs.')
+    if not target.exists():target.write_bytes(notice)
+    return hashlib.sha256(notice).hexdigest().upper()

@@ -1,5 +1,7 @@
 # VIAVW — Virtual Application Layers for Windows
 
+Licensed under [MIT](LICENSE). Copyright (c) 2026 The Coded Craftsman, LLC. Third-party components retain their own licenses and notices.
+
 [Clean-checkout build and packaging](docs/BUILDING.md) describes the tracked-source mode and prerequisites. [Public validation summary](docs/validation/2026-10-23-source-build.md) separates reproducible build evidence from application/Human acceptance. Historical `artifacts/` paths throughout these reports are local generated evidence, excluded from Git; they are not supplied by a clean checkout.
 
 [Windows installation and live Codex connection](docs/WINDOWS-INSTALLATION-20261023.md): VIAVW is installed at `%LOCALAPPDATA%\Programs\VIAVW`, with a Start menu manager and a standard Windows MSI in `dist`. Install, repair, removal, live-layer protection and document retention passed automated tests. Codex's registered VIAVW tools were used directly in this conversation to edit and save an installed Notepad++ document. CharlieAI remains unchanged.

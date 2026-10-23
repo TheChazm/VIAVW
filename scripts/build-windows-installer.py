@@ -11,7 +11,7 @@ import subprocess
 import uuid
 import xml.etree.ElementTree as ET
 from build_tool_launcher import build as build_launcher
-from installer_inputs import validate_archive, validate_package, existing_tool
+from installer_inputs import validate_archive, validate_package, existing_tool, include_project_license
 
 ROOT=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
@@ -58,6 +58,7 @@ build=output_root/name
 if build.exists():raise ValueError('Installer build directory already exists; use a fresh name')
 build.mkdir(parents=True)
 payload=build/'payload';validated.materialize(payload)
+project_license_sha256=include_project_license(ROOT,payload)
 launcher=build_launcher(build/'launcher',vswhere=args.vswhere,msvc_root=args.msvc_root,sdk_root=args.windows_sdk_root,sdk_version=args.windows_sdk_version)
 (build/'viavw-current.txt').write_text('releases\\'+release+'\\viavw.exe\n',encoding='ascii')
 host=payload/'src/LayerHost/bin/Runtime/net10.0-windows'
@@ -145,6 +146,6 @@ result=subprocess.run([str(wix_exe),'build',str(wxs),'-arch','x64','-ext',wix_ex
 if result.returncode:
     print('\n'.join(dict.fromkeys((result.stdout+result.stderr).splitlines()))[-8000:])
     raise RuntimeError('MSI build failed; see '+str(build/'wix-build.log'))
-report=dict(installer=str(installer),sha256=hashlib.sha256(installer.read_bytes()).hexdigest().upper(),bytes=installer.stat().st_size,productCode=product,version=version,release=release,sourceArchive=str(archive) if archive else None,sourceArchiveSha256=validated.source_sha256 if validated.archive else None,inputKind='archive' if validated.archive else 'package',inputSha256=validated.source_sha256,generationOnly=True,installedQualification='not run',wixTool=str(wix_exe),wixExtension=wix_extension,files=owned,rootFiles=root_files,testing=testing,menuName=product_name)
+report=dict(installer=str(installer),sha256=hashlib.sha256(installer.read_bytes()).hexdigest().upper(),bytes=installer.stat().st_size,productCode=product,version=version,release=release,sourceArchive=str(archive) if archive else None,sourceArchiveSha256=validated.source_sha256 if validated.archive else None,inputKind='archive' if validated.archive else 'package',inputSha256=validated.source_sha256,generationOnly=True,projectLicenseSha256=project_license_sha256,installedQualification='not run',wixTool=str(wix_exe),wixExtension=wix_extension,files=owned,rootFiles=root_files,testing=testing,menuName=product_name)
 (build/'installer.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
 print('VIAVW_INSTALLER='+str(installer),flush=True)

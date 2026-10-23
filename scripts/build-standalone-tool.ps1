@@ -53,6 +53,8 @@ Get-ChildItem -LiteralPath (Join-Path $projectRoot 'src\ViavwTool') -File | Wher
     $sourceHashes[$_.Name] = (Get-FileHash -LiteralPath $_.FullName).Hash
     Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $buildFolder ('tool-'+$_.Name))
 }
+# Include the project notice before manifest hashing; retain separate third-party notices.
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination (Join-Path $destination 'LICENSE')
 $hashes = [ordered]@{}
 Get-ChildItem -LiteralPath $destination -Recurse -File | ForEach-Object {
     $relative = [IO.Path]::GetRelativePath($destination,$_.FullName).Replace('\','/')

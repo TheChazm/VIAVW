@@ -99,6 +99,8 @@ try {
     foreach ($file in Get-ChildItem -LiteralPath (Join-Path $projectRoot 'src\ViavwTool') -File | Where-Object Extension -in '.cs','.csproj') {
         $toolHashes[$file.Name] = (Get-FileHash -LiteralPath $file.FullName).Hash
     }
+    # Include the project notice before manifest hashing; retain separate third-party notices.
+    Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination (Join-Path $destination 'LICENSE')
     $hashes = [ordered]@{}
     foreach ($file in Get-ChildItem -LiteralPath $destination -Recurse -File | Sort-Object FullName) {
         $relative = [IO.Path]::GetRelativePath($destination,$file.FullName).Replace('\','/')

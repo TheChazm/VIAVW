@@ -1,8 +1,8 @@
 # Build from a clean checkout
 
 Builds below do not install VIAVW, create applications or select a release. The
-source license is still pending the owner's choice; runtime license notices do
-not license this repository. Charlie alone handles pushing and publication.
+source is licensed under [MIT](../LICENSE), copyright 2026 The Coded Craftsman,
+LLC. Bundled runtimes and other third-party components retain their own notices. Charlie alone handles pushing and publication.
 
 ## Build prerequisites
 
@@ -58,7 +58,9 @@ source build. Neither build mode is the separate release-selection command.
 Python 3, an existing WiX executable and matching WiX UI extension DLL, MSVC x64
 tools, and Windows SDK headers/libraries are required. Generation was verified
 with MSVC 14.51.36231, Windows SDK 10.0.26100.0 and UI extension 5.0.2. Nothing is
-installed or downloaded by this explicit-input route. The native stable launcher
+installed or downloaded by this explicit-input route. Future ZIPs include the project LICENSE in their hash manifest; MSI payloads
+retain that notice alongside unchanged third-party notices. A different existing
+project LICENSE is rejected rather than overwritten. The native stable launcher
 is built from tracked C++ source; the manifest-verified manager is reused from
 the portable package, without a .NET republish or private selection file.
 
