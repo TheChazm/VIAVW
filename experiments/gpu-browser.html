@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>VIAVW GPU compatibility experiment</title>
+<style>body{margin:24px;background:#edf2f7;font:18px Segoe UI}input,button{font:inherit;padding:10px}input{width:420px}canvas{display:block;margin:20px 0}pre{font:14px Consolas;white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h2>Ordinary Chrome · hardware WebGL · virtual interaction</h2>
+<input id="editor" autofocus placeholder="Independent input"><button id="toggle">Change GPU color</button>
+<canvas id="surface" width="540" height="180"></canvas><pre id="status"></pre>
+<script>
+const gl=surface.getContext('webgl'); const debug=gl&&gl.getExtension('WEBGL_debug_renderer_info');
+window.observations={renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):null,webgl:!!gl,changes:0,events:[]};
+function draw(){if(gl){const odd=observations.changes%2;gl.clearColor(odd?242/255:40/255,odd?140/255:180/255,odd?40/255:100/255,1);gl.clear(gl.COLOR_BUFFER_BIT)}document.getElementById('status').textContent=JSON.stringify({text:editor.value,renderer:observations.renderer,changes:observations.changes,events:observations.events.length},null,2)}
+toggle.onclick=()=>{observations.changes++;draw()};
+for(const type of ['keydown','keyup','input','click'])document.addEventListener(type,e=>{observations.events.push({type,trusted:e.isTrusted,target:e.target.id});draw()});
+draw();
+</script>

@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>VIAVW GPU visibility research</title>
+<style>
+body{margin:24px;background:#edf2f7;font:18px Segoe UI}input,button{font:inherit;padding:10px}#editor{width:370px}canvas{display:block;margin:18px 0}#slider{display:block;width:500px}pre{font:13px Consolas;white-space:pre-wrap}
+</style>
+<h2>Private GPU presentation and resumption</h2>
+<input id="editor" autofocus placeholder="Independent input"><button id="toggle">Change GPU color</button>
+<canvas id="surface" width="540" height="180"></canvas>
+<label>Ordinary range control<input id="slider" type="range" min="0" max="100" value="20"></label>
+<pre id="status"></pre>
+<script>
+const gl=surface.getContext('webgl'),debug=gl&&gl.getExtension('WEBGL_debug_renderer_info');
+const history=[],events=[];let changes=0,frames=0,observations=0,lastFrame=0,contextLost=0;
+const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}};
+function snapshot(){return {text:editor.value,selectionStart:editor.selectionStart,selectionEnd:editor.selectionEnd,slider:Number(slider.value),changes,frames,lastFrame,observations,visibility:document.visibilityState,focused:document.hasFocus(),innerHeight,webgl:!!gl,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):null,contextLost,editor:rect(editor),toggle:rect(toggle),sliderRect:rect(slider),surface:rect(surface),history:history.slice(-48),events:events.slice(-48)}}
+function observe(){observations++;status.textContent=JSON.stringify({text:editor.value,slider:slider.value,changes,frames,visibility:document.visibilityState},null,2);if(location.protocol==='http:')fetch('/observed',{method:'POST',body:JSON.stringify(snapshot())}).catch(()=>{})}
+function draw(){if(!gl)return;gl.disable(gl.SCISSOR_TEST);const odd=changes%2;gl.clearColor(odd?242/255:40/255,odd?140/255:180/255,odd?40/255:100/255,1);gl.clear(gl.COLOR_BUFFER_BIT);
+// The top strip encodes an actual WebGL frame counter; capture reads its pixels.
+gl.enable(gl.SCISSOR_TEST);for(let bit=0;bit<16;bit++){const on=(frames>>bit)&1;gl.scissor(bit*20,160,20,20);gl.clearColor(on?1:0,on?1:0,on?1:0,1);gl.clear(gl.COLOR_BUFFER_BIT)}gl.disable(gl.SCISSOR_TEST)}
+function animate(now){frames++;lastFrame=now;draw();requestAnimationFrame(animate)}
+toggle.onclick=()=>{changes++;draw();observe()};
+for(const type of ['keydown','keyup','input','click','pointerdown','pointermove','pointerup','gotpointercapture','lostpointercapture'])document.addEventListener(type,e=>{if(type!=='pointermove'||e.buttons)events.push({type,trusted:e.isTrusted,target:e.target.id,buttons:e.buttons,key:e.key,ctrl:e.ctrlKey,shift:e.shiftKey});if(events.length>96)events.splice(0,48);if(type==='input'||type==='click'||type==='pointerup')observe()});
+document.addEventListener('visibilitychange',()=>{history.push({visibility:document.visibilityState,frames,at:performance.now()});observe()});
+surface.addEventListener('webglcontextlost',()=>{contextLost++;observe()});
+draw();requestAnimationFrame(animate);setInterval(observe,500);observe();
+</script>

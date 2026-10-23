@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Disposable browser application</title>
+<style>body { font: 18px Segoe UI, sans-serif; margin: 24px; background: #f0f3f7; color: #172133; } input { width: 540px; font: inherit; padding: 12px; } button { font: inherit; padding: 12px 24px; margin-top: 18px; } #status { margin-top: 18px; font: 15px Consolas, monospace; }</style>
+<h2>Independent Chromium page</h2>
+<p>CDP input adapter · normal browser event handling · disposable local page</p>
+<input id="editor" placeholder="Click, then type through the adapter">
+<br><button id="counter">Increment counter</button>
+<div id="status"></div>
+<script>
+const editor = document.querySelector('#editor');
+const counter = document.querySelector('#counter');
+window.observations = { ticks: 0, clicks: 0, events: [] };
+function show() { document.querySelector('#status').textContent = `ticks=${observations.ticks}; clicks=${observations.clicks}; events=${observations.events.length}; text=${editor.value}`; }
+for (const type of ['keydown', 'keyup', 'input', 'mousedown', 'mouseup', 'click']) {
+  document.addEventListener(type, e => { observations.events.push({ type, trusted: e.isTrusted, target: e.target.id, ctrl: !!e.ctrlKey, shift: !!e.shiftKey, alt: !!e.altKey }); show(); });
+}
+counter.addEventListener('click', () => { observations.clicks++; show(); });
+setInterval(() => { observations.ticks++; show(); }, 250);
+show();
+</script>
